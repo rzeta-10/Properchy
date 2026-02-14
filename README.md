@@ -2,7 +2,9 @@
 
 Properchy is a house price estimator for Ames, Iowa. It uses an XGBoost model trained on historical data (2006-2010) and features a frontend UI for real-time predictions. 
 
-The project is built with **ZenML** and **MLflow** to ensure the entire modeling process—from data cleaning to deployment—is organized and reproducible.
+**Live Demo: [properchy.onrender.com](https://properchy.onrender.com/)**
+
+The project is built with **ZenML** and **MLflow** to ensure the entire modeling process from data cleaning to deployment is organized and reproducible.
 
 ---
 
