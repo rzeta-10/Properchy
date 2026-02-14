@@ -84,8 +84,6 @@ This project includes configurations for deployment on **Render.com**.
 2. Connect your repo to Render.
 3. Use the included `render.yaml` or set the start command to `gunicorn app:app`.
 
-For a detailed guide, check [DEPLOYMENT.md](docs/DEPLOYMENT.md).
-
 ---
 
 **Happy Predicting! 🏠📊**
