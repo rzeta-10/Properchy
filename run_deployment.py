@@ -17,7 +17,12 @@ from zenml.integrations.mlflow.model_deployers.mlflow_model_deployer import (
     default=False,
     help="Stop the prediction service when done",
 )
-def run_main(stop_service: bool):
+@click.option(
+    "--model-type",
+    default="xgboost",
+    help="Model type to train (xgboost or linear_regression)",
+)
+def run_main(stop_service: bool, model_type: str):
     """Run the prices predictor deployment pipeline"""
     model_name = "prices_predictor"
 
@@ -38,7 +43,7 @@ def run_main(stop_service: bool):
         return
 
     # Run the continuous deployment pipeline
-    continuous_deployment_pipeline()
+    continuous_deployment_pipeline(model_type=model_type)
 
     # Get the active model deployer
     model_deployer = MLFlowModelDeployer.get_active_model_deployer()

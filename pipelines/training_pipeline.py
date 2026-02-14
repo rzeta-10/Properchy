@@ -3,18 +3,21 @@ from steps.data_splitter_step import data_splitter_step
 from steps.feature_engineering_step import feature_engineering_step
 from steps.handle_missing_values_step import handle_missing_values_step
 from steps.model_building_step import model_building_step
-from steps.model_evaluator import model_evaluator_step
+from steps.model_evaluator_step import model_evaluator_step
 from steps.outlier_detection_step import outlier_detection_step
 from zenml import pipeline
 
 
 @pipeline
-def ml_pipeline():
+def ml_pipeline(model_type: str = "xgboost"):
     """Define an end-to-end machine learning pipeline."""
 
     # Data Ingestion Step
+    # Using relative path or better yet, a configurable path. But for now I'll stick to the existing one but fix it to be linux friendly if needed
+    # The existing path is Windows style "C:\\Users...". I should fix this to be relative or absolute in the project.
+    # I'll use a relative path for now, assuming data is in `data/archive.zip`.
     raw_data = data_ingestion_step(
-        file_path="C:\\Users\\rohan\\OneDrive\\Desktop\\Properchy\\data\\archive.zip"
+        file_path="./data/archive.zip"
     )
 
     # Handling Missing Values Step
@@ -32,7 +35,7 @@ def ml_pipeline():
     X_train, X_test, y_train, y_test = data_splitter_step(clean_data, target_column="SalePrice")
 
     # Model Building Step
-    model = model_building_step(X_train=X_train, y_train=y_train)
+    model = model_building_step(X_train=X_train, y_train=y_train, model_type=model_type)
 
     # Model Evaluation Step
     evaluation_metrics, mse = model_evaluator_step(

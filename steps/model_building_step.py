@@ -6,19 +6,18 @@ import pandas as pd
 from sklearn.base import RegressorMixin
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
-from zenml import ArtifactConfig, step
-from zenml.client import Client
+from src.model_building import LinearRegressionStrategy, XGBoostStrategy
+from zenml import ArtifactConfig, step, Model
 from zenml.integrations.mlflow.experiment_trackers import MLFlowExperimentTracker
-from zenml.model import Model
 
 # Initialize the experiment tracker
-experiment_tracker = MLFlowExperimentTracker(
-    name="mlflow_tracker",
-    tracking_uri="file:./mlruns"
-)
+# experiment_tracker = MLFlowExperimentTracker(
+#     name="mlflow_tracker",
+#     tracking_uri="file:./mlruns"
+# )
+
 
 model = Model(
     name="prices_predictor",
@@ -28,19 +27,22 @@ model = Model(
 )
 
 
-@step(enable_cache=False, experiment_tracker=experiment_tracker.name)
+@step(enable_cache=False, experiment_tracker="mlflow_tracker")
 def model_building_step(
-    X_train: pd.DataFrame, y_train: pd.Series
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    model_type: str = "xgboost",
 ) -> Annotated[Pipeline, ArtifactConfig(name="sklearn_pipeline", is_model_artifact=True)]:
     """
-    Builds and trains a Linear Regression model using scikit-learn wrapped in a pipeline.
+    Builds and trains a model using the selected strategy.
 
     Parameters:
     X_train (pd.DataFrame): The training data features.
     y_train (pd.Series): The training data labels/target.
+    model_type (str): The type of model to train ("linear_regression" or "xgboost").
 
     Returns:
-    Pipeline: The trained scikit-learn pipeline including preprocessing and the Linear Regression model.
+    Pipeline: The trained pipeline including preprocessing and the model.
     """
     # Ensure the inputs are of the correct type
     if not isinstance(X_train, pd.DataFrame):
@@ -60,7 +62,7 @@ def model_building_step(
     categorical_transformer = Pipeline(
         steps=[
             ("imputer", SimpleImputer(strategy="most_frequent")),
-            ("onehot", OneHotEncoder(handle_unknown="ignore")),
+            ("onehot", OneHotEncoder(handle_unknown="ignore", sparse_output=False)),
         ]
     )
 
@@ -69,33 +71,43 @@ def model_building_step(
         transformers=[
             ("num", numerical_transformer, numerical_cols),
             ("cat", categorical_transformer, categorical_cols),
-        ]
+        ],
+        verbose_feature_names_out=False,
     )
-
-    # Define the model training pipeline
-    pipeline = Pipeline(steps=[("preprocessor", preprocessor), ("model", LinearRegression())])
+    
+    # Configure preprocessor to return pandas DataFrame
+    preprocessor.set_output(transform="pandas")
 
     # Start an MLflow run to log the model training process
     if not mlflow.active_run():
         mlflow.start_run()  # Start a new MLflow run if there isn't one active
 
     try:
-        # Enable autologging for scikit-learn to automatically capture model metrics, parameters, and artifacts
+        # Enable autologging
         mlflow.sklearn.autolog()
+        mlflow.xgboost.autolog()
 
-        logging.info("Building and training the Linear Regression model.")
-        pipeline.fit(X_train, y_train)
+        logging.info("Preprocessing data.")
+        X_train_transformed = preprocessor.fit_transform(X_train, y_train)
+
+        logging.info(f"Selecting model strategy: {model_type}")
+        if model_type == "linear_regression":
+            strategy = LinearRegressionStrategy()
+        elif model_type == "xgboost":
+            strategy = XGBoostStrategy()
+        else:
+            raise ValueError(f"Unknown model type: {model_type}")
+
+        logging.info("Building and training the model.")
+        # Train the model using the strategy (which includes scaling)
+        trained_model_pipeline = strategy.build_and_train_model(X_train_transformed, y_train)
+        
         logging.info("Model training completed.")
 
-        # Log the columns that the model expects
-        onehot_encoder = (
-            pipeline.named_steps["preprocessor"].transformers_[1][1].named_steps["onehot"]
+        # Create the full pipeline
+        full_pipeline = Pipeline(
+            steps=[("preprocessor", preprocessor), ("model", trained_model_pipeline)]
         )
-        onehot_encoder.fit(X_train[categorical_cols])
-        expected_columns = numerical_cols.tolist() + list(
-            onehot_encoder.get_feature_names_out(categorical_cols)
-        )
-        logging.info(f"Model expects the following columns: {expected_columns}")
 
     except Exception as e:
         logging.error(f"Error during model training: {e}")
@@ -105,4 +117,4 @@ def model_building_step(
         # End the MLflow run
         mlflow.end_run()
 
-    return pipeline
+    return full_pipeline
