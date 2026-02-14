@@ -32,6 +32,7 @@ venv.bak/
 # MLflow
 mlruns/
 mlartifacts/
+!mlruns/**/model.pkl
 
 # Data
 extracted_data/
