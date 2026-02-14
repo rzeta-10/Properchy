@@ -255,11 +255,9 @@ def get_features():
     })
 
 
+# Load model on startup
+load_model()
+
 if __name__ == '__main__':
-    # Load model on startup
-    if load_model():
-        logger.info("Starting Flask server...")
-        app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=False)
-    else:
-        logger.error("Failed to load model. Exiting.")
-        exit(1)
+    logger.info("Starting Flask server...")
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=False)
