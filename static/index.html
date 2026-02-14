@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Properchy - Ames Housing Price Estimator</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Left Panel -->
+        <aside class="info-panel">
+            <div class="panel-content">
+                <header class="brand">
+                    <h1>Properchy</h1>
+                    <p class="location">Ames, Iowa</p>
+                </header>
+
+                <div class="description">
+                    <h2>House Price Estimator</h2>
+                    <p>Predicts residential property values in Ames, Iowa based on historical sales data from 2006-2010.</p>
+                </div>
+
+                <!-- Data Visualization -->
+                <div class="data-viz">
+                    <h3>Training Data Overview</h3>
+                    <div class="viz-stats">
+                        <div class="stat-bar">
+                            <div class="stat-label">Properties</div>
+                            <div class="stat-visual">
+                                <div class="bar" style="width: 100%"></div>
+                                <span class="stat-value">2,930</span>
+                            </div>
+                        </div>
+                        <div class="stat-bar">
+                            <div class="stat-label">Avg. Price</div>
+                            <div class="stat-visual">
+                                <div class="bar" style="width: 75%"></div>
+                                <span class="stat-value">$180k</span>
+                            </div>
+                        </div>
+                        <div class="stat-bar">
+                            <div class="stat-label">Features</div>
+                            <div class="stat-visual">
+                                <div class="bar" style="width: 85%"></div>
+                                <span class="stat-value">79</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dataset-meta">
+                    <div class="meta-item">
+                        <span class="label">Dataset</span>
+                        <span class="value">Ames Housing</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="label">Period</span>
+                        <span class="value">2006-2010</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="label">Model</span>
+                        <span class="value">XGBoost</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="label">Accuracy</span>
+                        <span class="value">90.5% R²</span>
+                    </div>
+                </div>
+
+                <footer class="panel-footer">
+                    <a href="https://www.kaggle.com/c/house-prices-advanced-regression-techniques" 
+                       target="_blank" 
+                       rel="noopener noreferrer" 
+                       class="dataset-link">
+                        View Dataset on Kaggle →
+                    </a>
+                    <p>For educational purposes</p>
+                </footer>
+            </div>
+        </aside>
+
+        <!-- Right Panel -->
+        <main class="form-panel">
+            <div class="panel-content">
+                <form id="predictionForm" class="prediction-form">
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label for="grLivArea">Living Area (sq ft)</label>
+                            <input type="number" id="grLivArea" name="GrLivArea" 
+                                   placeholder="1500" min="0" max="20000" required>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="lotArea">Lot Size (sq ft)</label>
+                            <input type="number" id="lotArea" name="LotArea" 
+                                   placeholder="10000" min="0" max="500000" required>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="overallQual">Overall Quality</label>
+                            <select id="overallQual" name="OverallQual" required>
+                                <option value="">Select</option>
+                                <option value="5">Average (5)</option>
+                                <option value="6">Above Avg (6)</option>
+                                <option value="7">Good (7)</option>
+                                <option value="8">Very Good (8)</option>
+                                <option value="9">Excellent (9)</option>
+                                <option value="10">Outstanding (10)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="yearBuilt">Year Built</label>
+                            <input type="number" id="yearBuilt" name="YearBuilt" 
+                                   placeholder="2000" min="1800" max="2026" required>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="bedroomAbvGr">Bedrooms</label>
+                            <input type="number" id="bedroomAbvGr" name="BedroomAbvGr" 
+                                   placeholder="3" min="0" max="20" required>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="fullBath">Bathrooms</label>
+                            <input type="number" id="fullBath" name="FullBath" 
+                                   placeholder="2" min="0" max="10" required>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="totRmsAbvGrd">Total Rooms</label>
+                            <input type="number" id="totRmsAbvGrd" name="TotRmsAbvGrd" 
+                                   placeholder="6" min="1" max="30" required>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="garageCars">Garage (cars)</label>
+                            <input type="number" id="garageCars" name="GarageCars" 
+                                   placeholder="2" min="0" max="10" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="predictBtn">
+                        Calculate Estimate
+                    </button>
+                </form>
+
+                <!-- Result Display -->
+                <div class="result-display" id="resultDisplay" style="display: none;">
+                    <div class="result-header">
+                        <span class="result-label">Estimated Value</span>
+                        <button type="button" class="btn-reset" id="resetBtn">Reset</button>
+                    </div>
+                    <div class="result-price">
+                        <span class="currency">$</span>
+                        <span class="amount" id="priceAmount">0</span>
+                    </div>
+                    <p class="result-note">Based on Ames, Iowa market data (2006-2010)</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="spinner"></div>
+        <p>Calculating...</p>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
